@@ -13,6 +13,7 @@
 #include <functional>
 #include <iostream>
 #include <string>
+#include <iomanip>
 
 /*
     ============================================================
@@ -99,7 +100,7 @@ public:
 
 /*
     ============================================================
-    2b. Detect queue-like types (FIXED)
+    2b. Detect queue-like types
     ============================================================
 */
 
@@ -113,6 +114,7 @@ private:
       std::declval<U>().size(),
       std::declval<U>().push(std::declval<typename U::value_type>()),
       std::declval<U>().pop(),
+      std::declval<U>().front(),
       std::true_type());
 
   template <typename>
@@ -353,7 +355,6 @@ public:
     entries_.emplace_back(
         new RegistryEntry<ContainerType>(name, container, default_fn));
     max_name_size = std::max(max_name_size, name.length());
-    std::cout << name << " : length: " <<  name.length() << " : max: " << max_name_size << std::endl;
   }
 
   template <typename ContainerType, typename ComputeLambda>
@@ -364,7 +365,14 @@ public:
     entries_.emplace_back(
         new RegistryEntry<ContainerType>(name, container, custom_fn));
     max_name_size = std::max(max_name_size, name.length());
-    std::cout << name << " : length: " <<  name.length() << " : max: " << max_name_size << std::endl;
+  }
+
+  size_t clearAll()
+  {
+    size_t count = entries_.size();
+    entries_.clear();
+    max_name_size = 0;
+    return count;
   }
 
   void print(std::ostream &os = std::cout) const
@@ -376,6 +384,16 @@ public:
           << std::right << std::setw(10) << std::setfill(' ') << entry->compute()
           << std::endl;
     }
+  }
+
+  std::unordered_map<std::string, size_t> compute_all() const
+  {
+    std::unordered_map<std::string, size_t> results;
+    for (const auto &entry : entries_)
+    {
+      results[entry->name()] = entry->compute();
+    }
+    return results;
   }
 
 private:
