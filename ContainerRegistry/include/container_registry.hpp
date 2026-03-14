@@ -49,7 +49,29 @@
 
 /*
     ============================================================
-    1. Detect map-like types
+    1. Detect custom sized implementation (types with size() method)
+    ============================================================
+*/
+
+template <typename T>
+class is_sized_container_impl
+{
+private:
+  template <typename U>
+  static auto test(int) -> decltype(
+      std::declval<U>().size(),
+      std::true_type());
+
+  template <typename>
+  static std::false_type test(...);
+
+public:
+  static constexpr bool value = decltype(test<T>(0))::value;
+};
+
+/*
+    ============================================================
+    2. Detect map-like types
     ============================================================
 */
 
@@ -73,7 +95,7 @@ public:
 
 /*
     ============================================================
-    2. Detect vector-like types
+    3. Detect vector-like types
     ============================================================
 */
 
@@ -100,7 +122,7 @@ public:
 
 /*
     ============================================================
-    2b. Detect queue-like types
+    3b. Detect queue-like types
     ============================================================
 */
 
@@ -129,7 +151,7 @@ public:
 
 /*
     ============================================================
-    2c. Detect stack-like types
+    3c. Detect stack-like types
     ============================================================
 */
 
@@ -159,12 +181,41 @@ public:
 
 /*
     ============================================================
-    3. Recursive compute_size (COUNT ONLY END NODES)
+    3d. Finalize is_sized_container (only for custom types, not standard containers)
+    ============================================================
+*/
+
+template <typename T>
+class is_sized_container
+{
+public:
+  static constexpr bool value =
+      is_sized_container_impl<T>::value &&
+      !is_map_like<T>::value &&
+      !is_vector_like<T>::value &&
+      !is_queue_like<T>::value &&
+      !is_stack_like<T>::value;
+};
+
+/*
+    ============================================================
+    4. Recursive compute_size (COUNT ONLY END NODES)
     ============================================================
 */
 
 template <typename T>
 typename std::enable_if<
+    !is_sized_container<T>::value &&
+    !is_map_like<T>::value &&
+    !is_vector_like<T>::value &&
+    !is_queue_like<T>::value &&
+    !is_stack_like<T>::value,
+    size_t>::type
+compute_size_recursive(const T &);
+
+template <typename T>
+typename std::enable_if<
+    is_sized_container<T>::value &&
     !is_map_like<T>::value &&
     !is_vector_like<T>::value &&
     !is_queue_like<T>::value &&
@@ -199,6 +250,7 @@ compute_size_recursive(const T &);
 // Base case: leaf node (non-container)
 template <typename T>
 typename std::enable_if<
+    !is_sized_container<T>::value &&
     !is_map_like<T>::value &&
     !is_vector_like<T>::value &&
     !is_queue_like<T>::value &&
@@ -208,6 +260,56 @@ compute_size_recursive(const T &)
 {
   return 1;   // Count leaf element
 }
+
+/*
+    -------------------------
+    CUSTOM SIZED CONTAINER HANDLING
+    -------------------------
+*/
+
+template <typename T>
+typename std::enable_if<
+    is_sized_container<T>::value &&
+    !is_map_like<T>::value &&
+    !is_vector_like<T>::value &&
+    !is_queue_like<T>::value &&
+    !is_stack_like<T>::value,
+    size_t>::type
+compute_size_recursive(const T &obj)
+{
+  // Custom container with size() method
+  return obj.size();
+}
+
+/*
+    ============================================================
+    3. Recursive compute_size (COUNT ONLY END NODES)
+    ============================================================
+*/
+
+template <typename T>
+typename std::enable_if<
+    is_map_like<T>::value,
+    size_t>::type
+compute_size_recursive(const T &);
+
+template <typename T>
+typename std::enable_if<
+    is_vector_like<T>::value,
+    size_t>::type
+compute_size_recursive(const T &);
+
+template <typename T>
+typename std::enable_if<
+    is_queue_like<T>::value,
+    size_t>::type
+compute_size_recursive(const T &);
+
+template <typename T>
+typename std::enable_if<
+    is_stack_like<T>::value,
+    size_t>::type
+compute_size_recursive(const T &);
 
 /*
     -------------------------
@@ -344,8 +446,9 @@ public:
         is_map_like<ContainerType>::value ||
         is_vector_like<ContainerType>::value ||
         is_queue_like<ContainerType>::value ||
-        is_stack_like<ContainerType>::value,
-        "Unsupported container type");
+        is_stack_like<ContainerType>::value ||
+        is_sized_container<ContainerType>::value,
+        "Unsupported container type (must have size() method or be a standard container)");
 
     auto default_fn = [](const ContainerType &c)
     {
