@@ -30,5 +30,15 @@ target_link_libraries(container_tests
     GTest::gtest_main
 )
 
+# Enable /FS flag for MSVC to allow safe parallel compilation with shared PDB
+if(MSVC)
+  target_compile_options(container_tests PRIVATE /FS)
+endif()
+
 # Register the test with CTest
 add_test(NAME ContainerRegistryTests COMMAND container_tests)
+
+# Install test executable
+install(TARGETS container_tests
+  RUNTIME DESTINATION bin
+)
