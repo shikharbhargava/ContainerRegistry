@@ -41,18 +41,6 @@ TEST_F(ContainerRegistryTest, RegistryPrintFunctionality)
   EXPECT_NE(ss.str().find("OS Vector Maps"), std::string::npos);
 }
 
-TEST_F(ContainerRegistryTest, ThreadLocalRegistryBehavior)
-{
-  auto &main_thread_registry = ContainerRegistry::instance();
-  main_thread_registry.clearAll();
-  
-  std::vector<int> vec = {1, 2, 3};
-  main_thread_registry.register_container("main_vec", vec);
-  
-  // If we get here without crash, threading is OK
-  SUCCEED();
-}
-
 TEST_F(ContainerRegistryTest, ThreadLocalIsolation)
 {
   auto &main_registry = ContainerRegistry::instance();

@@ -182,7 +182,7 @@ size_t total = compute_size_recursive(nested); // 5
 
 ## Testing
 
-The suite currently includes 60 tests across:
+The suite currently includes 56 tests across:
 
 - Type detection
 - Vector-like containers

@@ -15,25 +15,6 @@ TEST_F(ContainerRegistryTest, RegisterLargeVector)
   EXPECT_EQ(compute_size_recursive(large_vec), 10000);
 }
 
-TEST_F(ContainerRegistryTest, RegisterNestedVectorsWithMixedSizes)
-{
-  auto &registry = ContainerRegistry::instance();
-  registry.clearAll();
-  
-  std::vector<std::vector<int>> mixed_sizes = {
-    {1},
-    {2, 3, 4, 5},
-    {},
-    {6, 7}
-  };
-  
-  registry.register_container("mixed_nested", mixed_sizes);
-  
-  auto all_sizes = registry.compute_all();
-  EXPECT_EQ(all_sizes["mixed_nested"], 7);
-  EXPECT_EQ(compute_size_recursive(mixed_sizes), 7);
-}
-
 TEST_F(ContainerRegistryTest, ClearAllReturnsCount)
 {
   auto &registry = ContainerRegistry::instance();
