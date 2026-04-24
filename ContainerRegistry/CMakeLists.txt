@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.12)
 
 configure_file(
-  ${CMAKE_CURRENT_SOURCE_DIR}/container_registry_version.hpp.in
-  ${CMAKE_CURRENT_BINARY_DIR}/generated/container_registry_version.hpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/version.hpp.in
+  ${CMAKE_CURRENT_BINARY_DIR}/generated/version.hpp
   @ONLY
 )
 
@@ -19,7 +19,7 @@ install(DIRECTORY include/
 )
 
 install(FILES
-  ${CMAKE_CURRENT_BINARY_DIR}/generated/container_registry_version.hpp
+  ${CMAKE_CURRENT_BINARY_DIR}/generated/version.hpp
   DESTINATION include
 )
 

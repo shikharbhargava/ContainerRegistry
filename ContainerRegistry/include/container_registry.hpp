@@ -1,5 +1,5 @@
-#ifndef _CONTAINERS_REGISTRY_
-#define _CONTAINERS_REGISTRY_
+#ifndef _CONTAINER_REGISTRY_
+#define _CONTAINER_REGISTRY_
 
 #include <type_traits>
 #include <vector>
@@ -16,8 +16,8 @@
 #include <iomanip>
 
 #if defined(__has_include)
-#if __has_include("container_registry_version.hpp")
-#include "container_registry_version.hpp"
+#if __has_include("version.hpp")
+#include "version.hpp"
 #else
 #define CONTAINER_REGISTRY_VERSION "0.0.0-dev"
 #define CONTAINER_REGISTRY_VERSION_MAJOR 0
@@ -529,4 +529,4 @@ private:
   size_t max_name_size = 0;
 };
 
-#endif // _CONTAINERS_REGISTRY_
+#endif // _CONTAINER_REGISTRY_
