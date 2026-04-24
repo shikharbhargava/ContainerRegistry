@@ -37,3 +37,23 @@ TEST_F(ContainerRegistryTest, RegisterStackOfInts)
   EXPECT_EQ(all_sizes["int_stack"], 3);
   EXPECT_EQ(compute_size_recursive(s), 3);
 }
+
+TEST_F(ContainerRegistryTest, RegisterPriorityQueue)
+{
+  auto &registry = ContainerRegistry::instance();
+  registry.clearAll();
+
+  std::priority_queue<int> pq;
+  pq.push(5);
+  pq.push(1);
+  pq.push(3);
+  pq.push(7);
+
+  registry.register_container("int_pqueue", pq);
+
+  auto all_sizes = registry.compute_all();
+  // priority_queue has top() not front(), so it is detected as stack_like
+  // compute_size_recursive returns pq.size()
+  EXPECT_EQ(all_sizes["int_pqueue"], 4);
+  EXPECT_EQ(compute_size_recursive(pq), 4);
+}

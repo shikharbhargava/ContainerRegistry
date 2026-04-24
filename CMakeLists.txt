@@ -3,7 +3,11 @@ cmake_minimum_required(VERSION 3.12)
 # Compiler flags first
 include(cmake/CompilerFlags.cmake)
 
-project(container VERSION 0.1.0 LANGUAGES CXX)
+# Read project version from VERSION file (single source of truth).
+file(READ "${CMAKE_SOURCE_DIR}/VERSION" PROJECT_VERSION_STR)
+string(STRIP "${PROJECT_VERSION_STR}" PROJECT_VERSION_STR)
+
+project(container VERSION ${PROJECT_VERSION_STR} LANGUAGES CXX)
 
 # Set default installation prefix to build/install/ContainerRegistry
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)

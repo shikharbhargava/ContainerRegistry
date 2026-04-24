@@ -59,3 +59,40 @@ TEST_F(ContainerRegistryTest, RegisterMapWithVectorValues)
   // Total: 6 + 5 + 5 = 16 characters
   EXPECT_EQ(compute_size_recursive(vec_map), 16);
 }
+
+TEST_F(ContainerRegistryTest, RegisterMultimap)
+{
+  auto &registry = ContainerRegistry::instance();
+  registry.clearAll();
+
+  std::multimap<std::string, int> mmap;
+  mmap.insert({"a", 1});
+  mmap.insert({"a", 2});
+  mmap.insert({"b", 3});
+
+  registry.register_container("int_multimap", mmap);
+
+  auto all_sizes = registry.compute_all();
+  // Each int value is a leaf: 1 + 1 + 1 = 3
+  EXPECT_EQ(all_sizes["int_multimap"], 3);
+  EXPECT_EQ(compute_size_recursive(mmap), 3);
+}
+
+TEST_F(ContainerRegistryTest, RegisterUnorderedMultimap)
+{
+  auto &registry = ContainerRegistry::instance();
+  registry.clearAll();
+
+  std::unordered_multimap<std::string, int> ummap;
+  ummap.insert({"x", 10});
+  ummap.insert({"x", 20});
+  ummap.insert({"y", 30});
+  ummap.insert({"y", 40});
+
+  registry.register_container("int_ummap", ummap);
+
+  auto all_sizes = registry.compute_all();
+  // 4 leaf int values
+  EXPECT_EQ(all_sizes["int_ummap"], 4);
+  EXPECT_EQ(compute_size_recursive(ummap), 4);
+}

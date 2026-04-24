@@ -15,6 +15,7 @@ add_executable(container_tests
   custom_compute_functions.cpp
   registry_behavior.cpp
   custom_structures.cpp
+  deep_nested_combinations.cpp
 )
 
 # Include directories for common.hpp

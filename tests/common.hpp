@@ -11,6 +11,9 @@
 #include <set>
 #include <deque>
 #include <list>
+#include <array>
+#include <unordered_set>
+#include <thread>
 #include <sstream>
 
 // ============================================================
@@ -77,6 +80,47 @@ struct ResourceTracker
   size_t size() const
   {
     return resources.size();
+  }
+};
+
+/**
+ * SensorReadings: stores raw integer readings for a single sensor channel.
+ * size() returns the number of recorded data points.
+ */
+struct SensorReadings
+{
+  std::vector<int> readings;
+
+  size_t size() const
+  {
+    return readings.size();
+  }
+};
+
+/**
+ * DeviceProfile: represents a device with multiple named sensor channels.
+ * Holds a map<sensor_name, SensorReadings>.
+ * size() aggregates the total number of readings across all sensors,
+ * because the registry treats this struct as an opaque leaf and
+ * does not recurse into its fields.
+ */
+struct DeviceProfile
+{
+  std::map<std::string, SensorReadings> sensors;
+
+  void add_sensor(const std::string &name, std::vector<int> values)
+  {
+    SensorReadings sr;
+    sr.readings = std::move(values);
+    sensors[name] = sr;
+  }
+
+  size_t size() const
+  {
+    size_t total = 0;
+    for (const auto &kv : sensors)
+      total += kv.second.size();
+    return total;
   }
 };
 

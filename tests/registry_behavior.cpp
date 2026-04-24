@@ -52,3 +52,27 @@ TEST_F(ContainerRegistryTest, ThreadLocalRegistryBehavior)
   // If we get here without crash, threading is OK
   SUCCEED();
 }
+
+TEST_F(ContainerRegistryTest, ThreadLocalIsolation)
+{
+  auto &main_registry = ContainerRegistry::instance();
+  main_registry.clearAll();
+
+  std::vector<int> main_vec = {1, 2, 3};
+  main_registry.register_container("main_vec", main_vec);
+
+  // Thread-local registry should be independent from the main thread's registry
+  size_t thread_entry_count = 0;
+  std::thread t([&thread_entry_count]() {
+    auto &thread_registry = ContainerRegistry::instance();
+    // Thread has its own fresh registry; main thread's entries are not visible
+    thread_entry_count = thread_registry.compute_all().size();
+  });
+  t.join();
+
+  EXPECT_EQ(thread_entry_count, 0);
+
+  // Main thread registry is unaffected
+  auto main_sizes = main_registry.compute_all();
+  EXPECT_EQ(main_sizes["main_vec"], 3);
+}

@@ -69,3 +69,42 @@ TEST_F(ContainerRegistryTest, RegisterSetOfInts)
   EXPECT_EQ(all_sizes["int_set"], 5);
   EXPECT_EQ(compute_size_recursive(s), 5);
 }
+
+TEST_F(ContainerRegistryTest, RegisterArray)
+{
+  auto &registry = ContainerRegistry::instance();
+  registry.clearAll();
+
+  std::array<int, 4> arr = {10, 20, 30, 40};
+  registry.register_container("int_array", arr);
+
+  auto all_sizes = registry.compute_all();
+  EXPECT_EQ(all_sizes["int_array"], 4);
+  EXPECT_EQ(compute_size_recursive(arr), 4);
+}
+
+TEST_F(ContainerRegistryTest, RegisterMultiset)
+{
+  auto &registry = ContainerRegistry::instance();
+  registry.clearAll();
+
+  std::multiset<int> ms = {1, 2, 2, 3, 3, 3};
+  registry.register_container("int_multiset", ms);
+
+  auto all_sizes = registry.compute_all();
+  EXPECT_EQ(all_sizes["int_multiset"], 6);
+  EXPECT_EQ(compute_size_recursive(ms), 6);
+}
+
+TEST_F(ContainerRegistryTest, RegisterUnorderedSet)
+{
+  auto &registry = ContainerRegistry::instance();
+  registry.clearAll();
+
+  std::unordered_set<int> us = {1, 2, 3, 4};
+  registry.register_container("int_uset", us);
+
+  auto all_sizes = registry.compute_all();
+  EXPECT_EQ(all_sizes["int_uset"], 4);
+  EXPECT_EQ(compute_size_recursive(us), 4);
+}

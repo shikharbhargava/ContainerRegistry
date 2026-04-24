@@ -1,272 +1,208 @@
 # ContainerRegistry
 
-A modern C++17 header-only library for registering and managing STL containers with type-aware operations. Provides recursive size computation, type detection, and a thread-safe registry pattern for container introspection and management.
+ContainerRegistry is a C++17 header-only library for registering STL containers (and custom sized types), computing logical sizes recursively, and querying all registered results through a thread-local registry.
 
-## Features
+## Highlights
 
-- **Multiple Container Support**: Vector-like, Map-like, Queue-like, Stack-like, and custom structures
-- **Recursive Size Computation**: Automatically computes sizes of nested containers
-- **Type-Safe Registration**: Thread-local singleton registry with type-erased entries
-- **String Support**: Strings are treated as vector-like containers, counting character content
-- **Custom Compute Functions**: Override default size computation with custom logic
-- **Custom Structures**: Support for any type with a `size()` method
-- **Header-Only**: No compilation needed, just include and use
+- Type-aware container detection (map-like, vector-like, queue-like, stack-like, custom sized).
+- Recursive size computation for nested standard containers.
+- Custom compute function support per registered container.
+- Thread-local singleton registry for per-thread isolation.
+- Type-erased storage so heterogeneous container types can coexist in one registry.
+- Generated version header from [VERSION](VERSION) during CMake configure.
 
-## Supported Container Types
+## Supported Types
 
-### Vector-Like Containers
-- `std::vector<T>`
-- `std::deque<T>`
-- `std::list<T>`
-- `std::set<T>`
-- `std::string` (counts characters)
+### Vector-like
+- std::vector<T>
+- std::deque<T>
+- std::list<T>
+- std::array<T, N>
+- std::set<T>
+- std::multiset<T>
+- std::unordered_set<T>
+- std::string
 
-### Map-Like Containers
-- `std::map<K, V>`
-- `std::unordered_map<K, V>`
+### Map-like
+- std::map<K, V>
+- std::multimap<K, V>
+- std::unordered_map<K, V>
+- std::unordered_multimap<K, V>
 
-### Adapter Containers
-- `std::queue<T>`
-- `std::stack<T>`
+### Adapters
+- std::queue<T>
+- std::stack<T>
+- std::priority_queue<T>
 
-### Custom Structures
-Any user-defined class with a `size()` method and optionally a custom size computation function.
+### Custom sized types
+Any user-defined type with a size() method that is not classified as map/vector/queue/stack-like.
 
-## Building
+## How Size Is Computed
+
+- Leaf non-container values count as 1.
+- Map-like containers sum sizes of mapped values.
+- Vector-like containers sum sizes of each element.
+- Queue/stack/priority_queue return adapter size() directly.
+- Custom sized types return obj.size().
+
+## Versioning
+
+This project follows Semantic Versioning and Keep a Changelog conventions.
+
+- Current version source: [VERSION](VERSION)
+- Change history: [CHANGELOG.md](CHANGELOG.md)
+
+Version info is also available in code through:
+
+- CONTAINER_REGISTRY_VERSION
+- CONTAINER_REGISTRY_VERSION_MAJOR
+- CONTAINER_REGISTRY_VERSION_MINOR
+- CONTAINER_REGISTRY_VERSION_PATCH
+- container_registry_version()
+
+## Build
 
 ### Prerequisites
-- C++17 or later
-- CMake 3.12+
-- GTest (included in deps for testing)
-- Windows, Linux, or macOS
 
-### Build Steps
+- C++17 compiler
+- CMake 3.12+
+
+### Configure and build
 
 ```bash
 cd ContainerRegistry
-mkdir ../build
+mkdir -p ../build
 cd ../build
 
-# Configure
-cmake ../ContainerRegistry
-
-# Build
+cmake ../ContainerRegistry -DCMAKE_BUILD_TYPE=Release
 cmake --build . --config Release
-
-# (Optional) Run tests
-cmake --build . --target RUN_TESTS --config Release
 ```
 
-## Installation
+### Run tests
 
-### Default Installation
-By default, files are installed to `build/install/ContainerRegistry`:
+```bash
+cd ../build
+./bin/Release/container_tests
+```
+
+Or with CTest:
+
+```bash
+cd ../build
+ctest --output-on-failure
+```
+
+## Install
+
+Default install prefix is inside the build directory:
 
 ```bash
 cmake --install . --config Release
 ```
 
-### Custom Installation Path
+Custom prefix:
+
 ```bash
-cmake --install . --config Release --prefix "/custom/install/path"
+cmake --install . --config Release --prefix /custom/install/path
 ```
 
-### Installed Files
-- **bin/** - Executables (container.exe, container_tests.exe)
-- **include/** - Header files (container_registry.hpp)
+## Usage
 
-## Usage Examples
-
-### Basic Registration
+### Basic registration and compute
 
 ```cpp
-#include "container_registry.hpp"
+#include <container_registry.hpp>
 #include <vector>
 #include <map>
 
-int main() {
-    // Get the thread-local registry singleton
-    auto& registry = ContainerRegistry::get_instance();
-    
-    // Register a vector
+int main()
+{
     std::vector<int> vec = {1, 2, 3, 4, 5};
-    registry.register_container<std::vector<int>>("MyVector");
-    
-    // Register a map
-    std::map<std::string, int> map = {{"a", 1}, {"b", 2}};
-    registry.register_container<std::map<std::string, int>>("MyMap");
-    
-    // Print all registered containers
+    std::map<std::string, int> m = {{"a", 1}, {"b", 2}};
+
+    auto &registry = ContainerRegistry::instance();
+    registry.clearAll();
+
+    registry.register_container("int_vector", vec);
+    registry.register_container("int_map", m);
+
+    auto all = registry.compute_all();
     registry.print();
-    
+
     return 0;
 }
 ```
 
-### Custom Compute Functions
-
-Override the default size computation:
+### Custom compute function
 
 ```cpp
-// Doubling compute function
-auto double_compute = [](const std::vector<int>& v) {
+std::vector<int> vec = {1, 2, 3, 4, 5};
+
+auto doubled_size = [](const std::vector<int> &v) {
     return v.size() * 2;
 };
 
-registry.register_container<std::vector<int>>(
-    "DoubledVector", 
-    double_compute
-);
+auto &registry = ContainerRegistry::instance();
+registry.register_container("custom_vec", vec, doubled_size);
 ```
 
-### Nested Containers
+### Nested containers
 
 ```cpp
-// Vector of vectors
-std::vector<std::vector<int>> nested = {
-    {1, 2, 3},
-    {4, 5},
-    {6, 7, 8, 9}
-};
-registry.register_container<std::vector<std::vector<int>>>("NestedVectors");
-```
-
-### Custom Structures
-
-Create a custom struct with size computation:
-
-```cpp
-struct DataPacket {
-    std::vector<int> data;
-    
-    size_t size() const {
-        return data.size();
-    }
+std::map<std::string, std::vector<int>> nested = {
+    {"a", {1, 2, 3}},
+    {"b", {4, 5}}
 };
 
-// Register custom structure
-DataPacket packet;
-packet.data = {1, 2, 3};
-registry.register_container<DataPacket>("CustomPacket");
+size_t total = compute_size_recursive(nested); // 5
 ```
 
-## API Reference
+## API
 
-### Core Types
+### Type traits
 
-#### `is_vector_like<T>`
-Type trait that detects vector-like containers (vector, deque, list, set, string).
+- is_map_like<T>
+- is_vector_like<T>
+- is_queue_like<T>
+- is_stack_like<T>
+- is_sized_container<T>
 
-#### `is_map_like<T>`
-Type trait that detects map-like containers (map, unordered_map).
+### Free function
 
-#### `is_queue_like<T>`
-Type trait that detects queue containers.
+- compute_size_recursive(const T &value)
 
-#### `is_stack_like<T>`
-Type trait that detects stack containers.
+### Registry
 
-#### `is_sized_container<T>`
-Type trait that detects custom structures with `size()` method (checked last after standard types).
-
-### Registry Interface
-
-#### `ContainerRegistry::get_instance()`
-Returns the thread-local singleton registry instance.
-
-#### `register_container<T>(name)`
-Register a container by type with a given name. Uses default size computation.
-
-#### `register_container<T>(name, compute_fn)`
-Register a container with a custom size computation function.
-- **Template Parameter**: `T` - Container type
-- **Parameters**: 
-  - `name` - Registry key (std::string)
-  - `compute_fn` - Function returning size_t from `const T&`
-
-#### `print()`
-Print all registered containers and their computed sizes to stdout.
-
-## Type Detection Hierarchy
-
-The library uses a hierarchical type detection system:
-
-1. **Map-like containers** - Checked first (map, unordered_map)
-2. **Vector-like containers** - Checked second (vector, deque, list, set, string)
-3. **Queue-like containers** - Checked third (queue)
-4. **Stack-like containers** - Checked fourth (stack)
-5. **Custom sized containers** - Checked last (user-defined with size())
-
-This ensures correct categorization and prevents misclassification of custom types.
-
-## Custom Compute Functions
-
-Create specialized size computations for specific use cases:
-
-```cpp
-// Summation function
-auto sum_elements = [](const std::vector<int>& v) {
-    size_t sum = 0;
-    for (int x : v) sum += x;
-    return sum;
-};
-
-registry.register_container<std::vector<int>>(
-    "SummedVector", 
-    sum_elements
-);
-```
+- ContainerRegistry::instance()
+- register_container(const std::string &name, ContainerType &container)
+- register_container(const std::string &name, ContainerType &container, ComputeLambda custom_fn)
+- compute_all() -> std::unordered_map<std::string, size_t>
+- print(std::ostream &os = std::cout)
+- clearAll() -> size_t
 
 ## Testing
 
-Run the comprehensive test suite:
+The suite currently includes 60 tests across:
 
-```bash
-cd build
+- Type detection
+- Vector-like containers
+- Map-like containers
+- Adapter containers
+- Nested and deep-nested combinations
+- Empty and edge cases
+- Custom compute functions
+- Registry behavior and thread-local isolation
+- Custom structures and real-world nested modeling
 
-# Run all tests
-.\bin\Release\container_tests.exe
+## Notes
 
-# Run with CTest
-ctest --config Release
-```
+- Registry entries store references to registered containers; ensure container lifetime exceeds registry usage.
+- For adapter containers (queue/stack/priority_queue), size computation uses adapter size() without iterating elements.
 
-### Test Coverage
+## Example Program
 
-- **34 test cases** organized across 10 categories:
-  - Type detection traits
-  - Vector-like containers
-  - Map-like containers
-  - Adapter containers (queue, stack)
-  - Nested structures
-  - Empty containers
-  - Edge cases (large vectors, mixed sizes)
-  - Custom compute functions
-  - Registry behavior and thread-safety
-  - Custom structures
-
-## Architecture
-
-### Thread Safety
-The registry uses thread-local storage (`thread_local`) to ensure each thread has its own independent registry instance, preventing race conditions in multi-threaded applications.
-
-### Type Erasure
-Container entries are stored using type-erased function pointers, allowing different container types to coexist in a single registry.
-
-### Recursive Size Computation
-The `compute_size_recursive` function template recursively computes sizes for nested containers by:
-1. Checking if the element type is a container
-2. If yes, summing the recursive sizes of all elements
-3. If no, counting leaf nodes directly
-
-## Examples
-
-See [main/main.cpp](main/main.cpp) for a complete working example.
+See [main/main.cpp](main/main.cpp).
 
 ## License
 
-See [LICENSE](LICENSE) for details.
-
-## Version
-
-Current version: **0.1.0**
+See [LICENSE](LICENSE).

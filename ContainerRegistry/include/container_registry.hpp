@@ -15,6 +15,27 @@
 #include <string>
 #include <iomanip>
 
+#if defined(__has_include)
+#if __has_include("container_registry_version.hpp")
+#include "container_registry_version.hpp"
+#else
+#define CONTAINER_REGISTRY_VERSION "0.0.0-dev"
+#define CONTAINER_REGISTRY_VERSION_MAJOR 0
+#define CONTAINER_REGISTRY_VERSION_MINOR 0
+#define CONTAINER_REGISTRY_VERSION_PATCH 0
+#endif
+#else
+#define CONTAINER_REGISTRY_VERSION "0.0.0-dev"
+#define CONTAINER_REGISTRY_VERSION_MAJOR 0
+#define CONTAINER_REGISTRY_VERSION_MINOR 0
+#define CONTAINER_REGISTRY_VERSION_PATCH 0
+#endif
+
+inline const char *container_registry_version()
+{
+  return CONTAINER_REGISTRY_VERSION;
+}
+
 /*
     ============================================================
     COMPLETE STANDARD CONTAINER COVERAGE

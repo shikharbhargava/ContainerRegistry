@@ -51,3 +51,49 @@ TEST_F(ContainerRegistryTest, StackLikeTypeDetection)
   EXPECT_FALSE(is_stack_like<IntVector>::value);
   EXPECT_FALSE(is_stack_like<IntQueue>::value);
 }
+
+TEST_F(ContainerRegistryTest, PriorityQueueIsStackLike)
+{
+  typedef std::priority_queue<int> IntPQ;
+  typedef std::queue<int> IntQueue;
+
+  // priority_queue has top() not front(), so it is stack_like, not queue_like
+  EXPECT_TRUE(is_stack_like<IntPQ>::value);
+  EXPECT_FALSE(is_queue_like<IntPQ>::value);
+  EXPECT_FALSE(is_vector_like<IntPQ>::value);
+  EXPECT_FALSE(is_map_like<IntPQ>::value);
+}
+
+TEST_F(ContainerRegistryTest, AdditionalVectorLikeTypeDetection)
+{
+  typedef std::multiset<int> IntMultiset;
+  typedef std::unordered_set<int> IntUnorderedSet;
+  typedef std::array<int, 4> IntArray;
+
+  EXPECT_TRUE(is_vector_like<IntMultiset>::value);
+  EXPECT_TRUE(is_vector_like<IntUnorderedSet>::value);
+  EXPECT_TRUE(is_vector_like<IntArray>::value);
+}
+
+TEST_F(ContainerRegistryTest, AdditionalMapLikeTypeDetection)
+{
+  typedef std::multimap<std::string, int> StringIntMultimap;
+  typedef std::unordered_multimap<std::string, int> StringIntUnorderedMultimap;
+
+  EXPECT_TRUE(is_map_like<StringIntMultimap>::value);
+  EXPECT_TRUE(is_map_like<StringIntUnorderedMultimap>::value);
+}
+
+TEST_F(ContainerRegistryTest, SizedContainerTypeDetection)
+{
+  EXPECT_TRUE(is_sized_container<DataPacket>::value);
+  EXPECT_TRUE(is_sized_container<BufferPool>::value);
+  EXPECT_TRUE(is_sized_container<ResourceTracker>::value);
+
+  // Standard containers should NOT be sized containers
+  typedef std::map<int, int> IntIntMap;
+  EXPECT_FALSE(is_sized_container<std::vector<int>>::value);
+  EXPECT_FALSE(is_sized_container<IntIntMap>::value);
+  EXPECT_FALSE(is_sized_container<std::queue<int>>::value);
+  EXPECT_FALSE(is_sized_container<std::stack<int>>::value);
+}
