@@ -6,10 +6,11 @@ class DataPacket
 {
 public:
   std::vector<int> elements;
+  std::vector<char> metadata;
 
   size_t size() const
   {
-    return elements.size();
+    return elements.size() + metadata.size();
   }
 };
 
@@ -30,9 +31,9 @@ int main()
   containerRegistry.register_container("OS Vector Maps", os_vec_map);
 
   std::queue<DataPacket> packet_queue;
-  DataPacket p1; p1.elements = {1, 2, 3};
+  DataPacket p1; p1.elements = {1, 2, 3}; p1.metadata = {'a', 'b', 'c'};
   packet_queue.push(p1);
-  DataPacket p2; p2.elements = {4, 5, 6};
+  DataPacket p2; p2.elements = {4, 5, 6}; p2.metadata = {'d', 'e', 'f'};
   packet_queue.push(p2);  
   // Custom lambda to compute total size of all DataPackets in the queue
   // We need to copy the queue because std::queue doesn't provide iterators
